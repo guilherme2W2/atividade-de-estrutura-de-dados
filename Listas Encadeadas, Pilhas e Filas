@@ -1,0 +1,200 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX 100
+
+typedef struct No {
+    int dado;
+    struct No* prox;
+} No;
+
+void inserir_inicio(No** lista, int valor) {
+    No* novo = malloc(sizeof(No));
+    novo->dado = valor;
+    novo->prox = *lista;
+    *lista = novo;
+}
+
+void inserir_fim(No** lista, int valor) {
+    No* novo = malloc(sizeof(No));
+    novo->dado = valor;
+    novo->prox = NULL;
+    if (*lista == NULL) {
+        *lista = novo;
+    } else {
+        No* temp = *lista;
+        while (temp->prox != NULL)
+            temp = temp->prox;
+        temp->prox = novo;
+    }
+}
+
+int contar_nos(No* lista) {
+    int count = 0;
+    while (lista) {
+        count++;
+        lista = lista->prox;
+    }
+    return count;
+}
+
+int buscar_elemento(No* lista, int valor) {
+    while (lista) {
+        if (lista->dado == valor) return 1;
+        lista = lista->prox;
+    }
+    return 0;
+}
+
+void inserir_posicao(No** lista, int valor, int pos) {
+    if (pos == 0) {
+        inserir_inicio(lista, valor);
+        return;
+    }
+    No* temp = *lista;
+    for (int i = 0; i < pos - 1 && temp; i++) {
+        temp = temp->prox;
+    }
+    if (!temp) return;
+    No* novo = malloc(sizeof(No));
+    novo->dado = valor;
+    novo->prox = temp->prox;
+    temp->prox = novo;
+}
+
+void remover_valor(No** lista, int valor) {
+    No* temp = *lista;
+    No* prev = NULL;
+    while (temp && temp->dado != valor) {
+        prev = temp;
+        temp = temp->prox;
+    }
+    if (!temp) return;
+    if (!prev) *lista = temp->prox;
+    else prev->prox = temp->prox;
+    free(temp);
+}
+
+void inverter_lista(No** lista) {
+    No* prev = NULL, *curr = *lista, *next;
+    while (curr) {
+        next = curr->prox;
+        curr->prox = prev;
+        prev = curr;
+        curr = next;
+    }
+    *lista = prev;
+}
+
+No* encontrar_meio(No* lista) {
+    No *slow = lista, *fast = lista;
+    while (fast && fast->prox) {
+        slow = slow->prox;
+        fast = fast->prox->prox;
+    }
+    return slow;
+}
+
+
+int pilha[MAX];
+int topo = -1;
+
+void push(int valor) {
+    if (topo < MAX - 1) pilha[++topo] = valor;
+}
+
+int pop() {
+    return (topo >= 0) ? pilha[topo--] : -1;
+}
+
+int topo_pilha() {
+    return (topo >= 0) ? pilha[topo] : -1;
+}
+
+int esta_vazia() {
+    return topo == -1;
+}
+
+
+typedef struct PilhaNo {
+    char dado;
+    struct PilhaNo* prox;
+} PilhaNo;
+
+void empilhar(PilhaNo** topo, char valor) {
+    PilhaNo* novo = malloc(sizeof(PilhaNo));
+    novo->dado = valor;
+    novo->prox = *topo;
+    *topo = novo;
+}
+
+char desempilhar(PilhaNo** topo) {
+    if (!*topo) return '\0';
+    PilhaNo* temp = *topo;
+    char valor = temp->dado;
+    *topo = temp->prox;
+    free(temp);
+    return valor;
+}
+
+
+int verificar_balanceamento(char* str) {
+    PilhaNo* topo = NULL;
+    for (int i = 0; str[i]; i++) {
+        if (str[i] == '(' || str[i] == '[' || str[i] == '{')
+            empilhar(&topo, str[i]);
+        else if (str[i] == ')' || str[i] == ']' || str[i] == '}') {
+            if (!topo) return 0;
+            char topoChar = desempilhar(&topo);
+            if ((str[i] == ')' && topoChar != '(') ||
+                (str[i] == ']' && topoChar != '[') ||
+                (str[i] == '}' && topoChar != '{'))
+                return 0;
+        }
+    }
+    return topo == NULL;
+}
+
+
+void inverter_string(char* str) {
+    PilhaNo* topo = NULL;
+    for (int i = 0; str[i]; i++) empilhar(&topo, str[i]);
+    for (int i = 0; str[i]; i++) str[i] = desempilhar(&topo);
+}
+
+
+int eh_palindromo(char* str) {
+    int len = strlen(str);
+    PilhaNo* topo = NULL;
+    for (int i = 0; i < len; i++) empilhar(&topo, str[i]);
+    for (int i = 0; i < len; i++) {
+        if (str[i] != desempilhar(&topo)) return 0;
+    }
+    return 1;
+}
+
+
+int main() {
+    No* lista = NULL;
+    inserir_fim(&lista, 10);
+    inserir_inicio(&lista, 5);
+    inserir_posicao(&lista, 7, 1);
+    printf("Nos: %d\n", contar_nos(lista));
+    printf("Busca 7: %d\n", buscar_elemento(lista, 7));
+    remover_valor(&lista, 10);
+    inverter_lista(&lista);
+    No* meio = encontrar_meio(lista);
+    if (meio) printf("Meio: %d\n", meio->dado);
+
+    char str[] = "({[]})";
+    printf("Balanceado: %d\n", verificar_balanceamento(str));
+
+    char palavra[] = "radar";
+    printf("Palindromo: %d\n", eh_palindromo(palavra));
+
+    inverter_string(palavra);
+    printf("Invertida: %s\n", palavra);
+
+    return 0;
+}
